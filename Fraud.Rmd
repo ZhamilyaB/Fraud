@@ -1,0 +1,59 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+Homework: Analyze, Can you see any patterns?, Knit, Create a document
+```{r}
+library(readr)
+library(lubridate)
+library(ggplot2)
+library(dplyr)
+```
+
+
+###Data
+```{r}
+Fraud_Data <- read_csv("Fraud/Fraud_Data.csv")
+IpAddress_to_Country <- read_csv("Fraud/IpAddress_to_Country.csv")
+```
+
+```{r}
+head(Fraud_Data, n=10)
+head(IpAddress_to_Country, n=10)
+```
+###General Data Exploration
+
+```{r}
+names(Fraud_Data)
+```
+```{r}
+nrow(Fraud_Data)
+```
+
+```{r}
+ggplot(Fraud_Data, aes(class)) + geom_histogram()
+```
+```{r}
+group_by(Fraud_Data, class) %>%
+  count()
+```
+###Brower
+Which browser has the most frauds?
+```{r}
+brow <- group_by(Fraud_Data, browser, class) %>%
+  count()
+brow
+```
+```{r}
+ggplot(data = brow)+
+  geom_bar(stat = "identity",
+    mapping = aes(x=browser,y=n, fill = as.factor(class)),
+          position = "dodge")
+```
+Chrome has more fraud than IE than Safari than FireFox than Opera
+Is the proportion similar of fraud vs not fraud?
+
+```{r}
+coord_cartesian()
+```
+
