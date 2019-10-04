@@ -10,8 +10,8 @@ library(ggplot2)
 library(dplyr)
 ```
 
-
 ###Data
+
 ```{r}
 Fraud_Data <- read_csv("Fraud/Fraud_Data.csv")
 IpAddress_to_Country <- read_csv("Fraud/IpAddress_to_Country.csv")
@@ -19,8 +19,11 @@ IpAddress_to_Country <- read_csv("Fraud/IpAddress_to_Country.csv")
 
 ```{r}
 head(Fraud_Data, n=10)
+```
+```{r}
 head(IpAddress_to_Country, n=10)
 ```
+
 ###General Data Exploration
 
 ```{r}
@@ -41,7 +44,7 @@ group_by(Fraud_Data, class) %>%
 Which browser has the most frauds?
 ```{r}
 brow <- group_by(Fraud_Data, browser, class) %>%
-  count()
+  count(brow)
 brow
 ```
 ```{r}
@@ -50,10 +53,44 @@ ggplot(data = brow)+
     mapping = aes(x=browser,y=n, fill = as.factor(class)),
           position = "dodge")
 ```
+
 Chrome has more fraud than IE than Safari than FireFox than Opera
 Is the proportion similar of fraud vs not fraud?
 
 ```{r}
-coord_cartesian()
+dseconds(Fraud_Data$purchase_time[1])
 ```
+```{r}
+head(Fraud_Data)
+```
+```{r}
+by_cyl <- mtcars %>% group_by(cyl)
+
+# grouping doesn't change how the data looks (apart from listing
+# how it's grouped):
+mtcars
+```
+
+```{r}
+purchase_time_vs_class <- group_by(Fraud_Data, purchase_time, class) %>%
+  count() %>%
+  ungroup() %>%
+  mutate(class=as.factor(class))
+purchase_time_vs_class
+ggplot(purchase_time_vs_class) +
+  geom_bar(stat = "identity", aes(x = purchase_time, y = n, fill = class), position = "dodge")
+```
+
+
+```{r}
+  count(brow)
+```
+
+
+
+
+
+
+
+
 
