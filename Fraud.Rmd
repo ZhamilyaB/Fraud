@@ -1,13 +1,39 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  md_document:
+    variant: markdown_github
 ---
 Homework: Analyze, Can you see any patterns?, Knit, Create a document
+
+Company XYZ is an e-commerce site that sells hand-made clothes. We have to build a model that predicts whether a user has a high probability of using the site to perform some illegal activity or not. We only have information about the user first transaction on the site and based on that you have to make your classification (“fraud/no fraud”).
+
+Data
+
+We have 2 table downloadable by clicking here. The 2 tables are:
+
+“Fraud_Data” - information about each user first transaction
+
+Columns:
+
+user_id : Id of the user. Unique by user signup_time : the time when the user created her account (GMT time) purchase_time : the time when the user bought the item (GMT time) purchase_value : the cost of the item purchased (USD) device_id : the device id. You can assume that it is unique by device. I.e., 􀀙 transa􀁊tions with the same device ID means that the same physical device was used to bu􀁠 source : user marketing channel: ads, SEO, Direct (i.e. came to the site by directly typing the site address on the browser). browser : the browser used by the user. sex : user sex: Male/Female age : user age ip_address : user numeric ip address class : this is what we are trying to predict: whether the activity was fraudulent (1) or not (0).
+
+“IpAddress_to_Country” - mapping each numeric ip address to its country.
+
+For each country, it gives a range. If the numeric ip address falls within the range, then the ip address belongs to the corresponding country.
+
+Columns:
+
+lower_bound_ip_address : the lower bound of the numeric ip address for that country upper_bound_ip_address : the upper bound of the numeric ip address for that country country : the corresponding country. If a user has an ip address whose value is within the upper and lower bound, then she is based in this country.
+
 ```{r}
 library(readr)
 library(lubridate)
 library(ggplot2)
 library(dplyr)
+library(tidyr)
+library(randomForest)
+library(ROCR)
 ```
 
 ###Data
@@ -15,6 +41,21 @@ library(dplyr)
 ```{r}
 Fraud_Data <- read_csv("Fraud/Fraud_Data.csv")
 IpAddress_to_Country <- read_csv("Fraud/IpAddress_to_Country.csv")
+```
+```{r}
+#Let's add the country to the original data set by using the ip address
+data_country = rep(NA, nrow(Fraud_Data))
+for (i in 1: nrow(Fraud_Data)){
+tmp = as.character(IpAddress_to_Country [Fraud_Data$IpAddress_to_Country[i] >= IpAddress_to_Country$lower_bound_ip_address & Fraud_Data$IpAddress_to_Country[i] <= IpAddress_to_Country$upper_bound_ip_address,"country"])
+if (length(tmp) == 1) {data_country[i] = tmp}
+}
+Fraud_Data$country = data_country
+
+Fraud_Data[, "signup_time"] = as.POSIXct(Fraud_Data[, "signup_time"], tz="GMT")
+
+Fraud_Data[, "purchase_time"] = as.POSIXct(Fraud_Data[, "purchase_time"], tz="GMT")
+
+summary(as.factor(Fraud_Data$country))
 ```
 
 ```{r}
@@ -43,22 +84,52 @@ group_by(Fraud_Data, class) %>%
 ###Brower
 Which browser has the most frauds?
 ```{r}
-brow <- group_by(Fraud_Data, browser, class) %>%
+brow <- group_by(Fraud_Data, browser, class)
   count(brow)
 brow
 ```
 ```{r}
 ggplot(data = brow)+
   geom_bar(stat = "identity",
-    mapping = aes(x=browser,y=n, fill = as.factor(class)),
-          position = "dodge")
+    mapping = aes(x = brow$browser,y = n, fill = as.factor(class)),
+          position = "dodge") 
 ```
+
+
+
+```{r}
+Fraud_Data$purchase_signup_diff = as.numeric(difftime(as.POSIXct(Fraud_Data$purchase_time, tz="GMT"), as.POSIXct(Fraud_Data$signup_time, tz="GMT"), unit="secs"))
+```
+
+
+
+```{r}
+#check for each device id how many different users had it
+Fraud_Data = Fraud_Data %>%
+group_by(device_id) %>%
+mutate (device_id_count = n())
+#check for each ip address how many different users had it
+Fraud_Data = data.frame(Fraud_Data %>%
+group_by(ip_address) %>%
+mutate (ip_address_count = n())
+)
+```
+
+
+```{r}
+#day of the week
+Fraud_Data$signup_time_wd = format(Fraud_Data$signup_time, "%A")
+Fraud_Data$purchase_time_wd = format(Fraud_Data$purchase_time, "%A" )
+```
+
+
+
 
 Chrome has more fraud than IE than Safari than FireFox than Opera
 Is the proportion similar of fraud vs not fraud?
 
 ```{r}
-dseconds(Fraud_Data$purchase_time[1])
+hour(Fraud_Data$purchase_time[1])
 ```
 ```{r}
 head(Fraud_Data)
@@ -89,7 +160,8 @@ ggplot(purchase_time_vs_class) +
 
 
 
-
+ip to country 
+lutz
 
 
 
